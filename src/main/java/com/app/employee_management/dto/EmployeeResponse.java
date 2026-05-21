@@ -3,7 +3,9 @@ package com.app.employee_management.dto;
 import com.app.employee_management.model.EmployeeRole;
 import lombok.Data;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @Data
 public class EmployeeResponse {
@@ -17,4 +19,7 @@ public class EmployeeResponse {
     private AddressDTO addressDTO;
 
     private List<WorkExperienceDTO> workExperiences;
+    private Integer totalYearsOfExperience;
+    private Set<String> technologies;
+
 }

@@ -12,7 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -88,6 +90,7 @@ public class EmployeeService {
 
     private EmployeeResponse mapToEmployeeResponse(Employee employee) {
         EmployeeResponse response = new EmployeeResponse();
+
         response.setId(String.valueOf(employee.getId()));
         response.setFirstName(employee.getFirstName());
         response.setEmail(employee.getEmail());
@@ -105,26 +108,48 @@ public class EmployeeService {
             response.setAddressDTO(addressDTO);
         }
 
-        if(employee.getWorkExperiences() != null){
+        List<WorkExperience> experiences =
+                Optional.ofNullable(employee.getWorkExperiences())
+                        .orElse(List.of());
 
-            List<WorkExperienceDTO> workDTOList =
-                    employee.getWorkExperiences()
-                            .stream()
-                            .map(work -> {
+        List<WorkExperienceDTO> workDTOList =
+                experiences.stream()
+                        .map(work -> {
+                            WorkExperienceDTO dto = new WorkExperienceDTO();
+                            dto.setCompanyName(work.getCompanyName());
+                            dto.setDesignation(work.getDesignation());
+                            dto.setYearsOfExperience(work.getYearsOfExperience());
+                            dto.setTechnology(work.getTechnology());
+                            return dto;
+                        })
+                        .toList();
 
-                                WorkExperienceDTO dto = new WorkExperienceDTO();
+        response.setWorkExperiences(workDTOList);
 
-                                dto.setCompanyName(work.getCompanyName());
-                                dto.setDesignation(work.getDesignation());
-                                dto.setYearsOfExperience(work.getYearsOfExperience());
-                                dto.setTechnology(work.getTechnology());
+        int totalExp =
+                experiences.stream()
+                        .mapToInt(w -> Optional.ofNullable(w.getYearsOfExperience()).orElse(0))
+                        .sum();
 
-                                return dto;
+        response.setTotalYearsOfExperience(totalExp);
 
-                            }).toList();
+        Set<String> techSet =
+                experiences.stream()
+                        .map(WorkExperience::getTechnology)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet());
 
-            response.setWorkExperiences(workDTOList);
-        }
+        response.setTechnologies(techSet);
+
         return response;
+    }
+
+    public boolean deleteEmployee(Long id) {
+        return employeeRepository.findById(id)
+                .map(emp -> {
+                    employeeRepository.delete(emp);
+                    return true;
+                })
+                .orElse(false);
     }
 }

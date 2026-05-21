@@ -8,7 +8,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,7 +23,6 @@ public class EmployeeController {
     @GetMapping
     public ResponseEntity<List<EmployeeResponse>> getAllEmployees(){
         return new ResponseEntity<>(employeeService.fetchAllEmployees(), HttpStatus.OK);
-//        return ResponseEntity.ok(employeeService.fetchAllEmployees());
     }
 
     @PostMapping
@@ -40,6 +42,50 @@ public class EmployeeController {
     public ResponseEntity<String> updateEmployee(@PathVariable Long id, @RequestBody EmployeeRequest updatedEmployeeRequest){
         boolean updated = employeeService.updateEmployee(id, updatedEmployeeRequest);
         return ResponseEntity.ok("Employee updated Successfully");
+    }
+
+    @GetMapping("/analytics/skills")
+    public ResponseEntity<Map<String, List<EmployeeResponse>>> getEmployeesGroupedBySkill() {
+
+        List<EmployeeResponse> employees = employeeService.fetchAllEmployees();
+
+        Map<String, List<EmployeeResponse>> grouped =
+                employees.stream()
+                        .filter(emp -> emp.getTechnologies() != null)
+                        .flatMap(emp ->
+                                emp.getTechnologies().stream()
+                                        .map(skill -> Map.entry(skill, emp))
+                        )
+                        .collect(Collectors.groupingBy(
+                                Map.Entry::getKey,
+                                Collectors.mapping(Map.Entry::getValue, Collectors.toList())
+                        ));
+
+        return ResponseEntity.ok(grouped);
+    }
+
+    @GetMapping("/top-experienced")
+    public ResponseEntity<List<EmployeeResponse>> getTopExperienced() {
+
+        return ResponseEntity.ok(
+                employeeService.fetchAllEmployees()
+                        .stream()
+                        .sorted(Comparator.comparing(EmployeeResponse::getTotalYearsOfExperience)
+                                .reversed())
+                        .limit(3)
+                        .toList()
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteEmployee(@PathVariable Long id) {
+        boolean deleted = employeeService.deleteEmployee(id);
+
+        if (deleted) {
+            return ResponseEntity.ok("Employee deleted successfully");
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
 }
