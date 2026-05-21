@@ -1,4 +1,4 @@
-package com.app.employee_management;//package com.app.ecom;
+package com.app.employee_management;
 
 import org.h2.server.web.JakartaWebServlet;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;

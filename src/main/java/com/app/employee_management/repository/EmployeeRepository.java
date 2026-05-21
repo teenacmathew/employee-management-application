@@ -1,6 +1,5 @@
 package com.app.employee_management.repository;
 
-//import com.app.ecom.model.Employee;
 import com.app.employee_management.model.Employee;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

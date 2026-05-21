@@ -5,11 +5,11 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USERNAME: embarkx
+      POSTGRES_USER: embarkx
       POSTGRES_PASSWORD: embarkx
-      PGDATA: /data/postgres
+      POSTGRES_DB: employeedb
     volumes:
-      - postgres:/data/postgres
+      - postgres:/var/lib/postgresql/data
     networks:
       - postgres
     restart: unless-stopped
