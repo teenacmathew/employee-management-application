@@ -3,8 +3,10 @@ package com.app.employee_management.service;
 import com.app.employee_management.dto.AddressDTO;
 import com.app.employee_management.dto.EmployeeRequest;
 import com.app.employee_management.dto.EmployeeResponse;
+import com.app.employee_management.dto.WorkExperienceDTO;
 import com.app.employee_management.model.Address;
 import com.app.employee_management.model.Employee;
+import com.app.employee_management.model.WorkExperience;
 import com.app.employee_management.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -45,7 +47,28 @@ public class EmployeeService {
             address.setCountry(employeeRequest.getAddressDTO().getCountry());
             employee.setAddress(address);
 
+            if(employeeRequest.getWorkExperiences() != null){
 
+                List<WorkExperience> workExperienceList =
+                        employeeRequest.getWorkExperiences()
+                                .stream()
+                                .map(workDTO -> {
+
+                                    WorkExperience workExperience = new WorkExperience();
+
+                                    workExperience.setCompanyName(workDTO.getCompanyName());
+                                    workExperience.setDesignation(workDTO.getDesignation());
+                                    workExperience.setYearsOfExperience(workDTO.getYearsOfExperience());
+                                    workExperience.setTechnology(workDTO.getTechnology());
+
+                                    workExperience.setEmployee(employee);
+
+                                    return workExperience;
+
+                                }).toList();
+
+                employee.setWorkExperiences(workExperienceList);
+            }
         }
     }
 
@@ -80,6 +103,27 @@ public class EmployeeService {
             addressDTO.setStreet(employee.getAddress().getStreet());
             addressDTO.setZipcode(employee.getAddress().getZipcode());
             response.setAddressDTO(addressDTO);
+        }
+
+        if(employee.getWorkExperiences() != null){
+
+            List<WorkExperienceDTO> workDTOList =
+                    employee.getWorkExperiences()
+                            .stream()
+                            .map(work -> {
+
+                                WorkExperienceDTO dto = new WorkExperienceDTO();
+
+                                dto.setCompanyName(work.getCompanyName());
+                                dto.setDesignation(work.getDesignation());
+                                dto.setYearsOfExperience(work.getYearsOfExperience());
+                                dto.setTechnology(work.getTechnology());
+
+                                return dto;
+
+                            }).toList();
+
+            response.setWorkExperiences(workDTOList);
         }
         return response;
     }

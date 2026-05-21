@@ -2,6 +2,8 @@ package com.app.employee_management.dto;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class EmployeeRequest {
     private String firstName;
@@ -10,4 +12,6 @@ public class EmployeeRequest {
     private String phone;
 
     private AddressDTO addressDTO;
+
+    private List<WorkExperienceDTO> workExperiences;
 }
