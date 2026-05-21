@@ -1,8 +1,7 @@
 # Employee Management API Documentation
 This document outlines the available REST API endpoints for the Employee Management application.
 **Base URL**: `/api/employees`
-> [!TIP]
-> If testing through ngrok from a frontend client or Postman, ensure you add the `ngrok-skip-browser-warning: true` header to bypass the ngrok warning page.
+
 ---
 ## 1. Get All Employees
 Retrieves a list of all employees in the system.
