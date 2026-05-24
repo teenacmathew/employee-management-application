@@ -108,9 +108,12 @@ public class EmployeeController {
 @GetMapping("/upload-json-to-s3")
 public ResponseEntity<String> uploadEmployeesJsonToS3() {
 
-    String s3Key = employeeService.uploadEmployeesJsonToS3();
+//    String s3Key = employeeService.uploadEmployeesJsonToS3();
 
-    return ResponseEntity.ok("Employee JSON uploaded successfully to S3. File key: " + s3Key);
+//    return ResponseEntity.ok("Employee JSON uploaded successfully to S3. File key: " + s3Key);
+    String presignedUrl = employeeService.uploadEmployeesJsonToS3();
+    return ResponseEntity.ok(presignedUrl);
+
 }
 
 

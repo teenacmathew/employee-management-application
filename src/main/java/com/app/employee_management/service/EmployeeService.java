@@ -14,6 +14,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.Map;
 
@@ -27,7 +28,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -38,6 +44,7 @@ public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final S3Client s3Client;
     private final ObjectMapper objectMapper;
+    private final S3Presigner s3Presigner;
 
     @Value("${aws.s3.bucket-name}")
     private String bucketName;
@@ -323,6 +330,7 @@ public class EmployeeService {
                     .bucket(bucketName)
                     .key(fileName)
                     .contentType("application/json")
+                    .acl(ObjectCannedACL.BUCKET_OWNER_FULL_CONTROL)
                     .build();
 
             s3Client.putObject(
@@ -330,7 +338,23 @@ public class EmployeeService {
                     RequestBody.fromString(jsonData, StandardCharsets.UTF_8)
             );
 
-            return fileName;
+            // Generate temporary downloadable URL
+            GetObjectRequest getObjectRequest =
+                    GetObjectRequest.builder()
+                            .bucket(bucketName)
+                            .key(fileName)
+                            .build();
+
+            GetObjectPresignRequest presignRequest =
+                    GetObjectPresignRequest.builder()
+                            .signatureDuration(Duration.ofMinutes(30))
+                            .getObjectRequest(getObjectRequest)
+                            .build();
+
+            PresignedGetObjectRequest presignedRequest =
+                    s3Presigner.presignGetObject(presignRequest);
+
+            return presignedRequest.url().toString();
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to upload employee JSON to S3", e);
