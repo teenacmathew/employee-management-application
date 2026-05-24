@@ -90,6 +90,7 @@ public class EmployeeController {
         }
     }
 
+//    api/employees/download-report
     @GetMapping("/download-report")
     public ResponseEntity<byte[]> downloadEmployeeReport() {
 
@@ -102,5 +103,15 @@ public class EmployeeController {
                 ))
                 .body(excelData);
     }
+
+//    GET /api/employees/upload-json-to-s3
+@GetMapping("/upload-json-to-s3")
+public ResponseEntity<String> uploadEmployeesJsonToS3() {
+
+    String s3Key = employeeService.uploadEmployeesJsonToS3();
+
+    return ResponseEntity.ok("Employee JSON uploaded successfully to S3. File key: " + s3Key);
+}
+
 
 }

@@ -23,10 +23,24 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 @Service
 @RequiredArgsConstructor
 public class EmployeeService {
     private final EmployeeRepository employeeRepository;
+    private final S3Client s3Client;
+    private final ObjectMapper objectMapper;
+
+    @Value("${aws.s3.bucket-name}")
+    private String bucketName;
 
     public List<EmployeeResponse> fetchAllEmployees(){
         return employeeRepository.findAll().stream()
@@ -290,6 +304,36 @@ public class EmployeeService {
     private void autoSizeColumns(Sheet sheet, int numberOfColumns) {
         for (int i = 0; i < numberOfColumns; i++) {
             sheet.autoSizeColumn(i);
+        }
+    }
+
+    public String uploadEmployeesJsonToS3() {
+        try {
+            List<EmployeeResponse> employees = fetchAllEmployees();
+
+            String jsonData = objectMapper
+                    .writerWithDefaultPrettyPrinter()
+                    .writeValueAsString(employees);
+
+            String fileName = "employee-reports/employees-"
+                    + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
+                    + ".json";
+
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(fileName)
+                    .contentType("application/json")
+                    .build();
+
+            s3Client.putObject(
+                    putObjectRequest,
+                    RequestBody.fromString(jsonData, StandardCharsets.UTF_8)
+            );
+
+            return fileName;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to upload employee JSON to S3", e);
         }
     }
 }
