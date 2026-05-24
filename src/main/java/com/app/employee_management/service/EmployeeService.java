@@ -4,6 +4,7 @@ import com.app.employee_management.dto.AddressDTO;
 import com.app.employee_management.dto.EmployeeRequest;
 import com.app.employee_management.dto.EmployeeResponse;
 import com.app.employee_management.dto.WorkExperienceDTO;
+import com.app.employee_management.kafka.EmployeeEventProducer;
 import com.app.employee_management.model.Address;
 import com.app.employee_management.model.Employee;
 import com.app.employee_management.model.WorkExperience;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -45,6 +47,7 @@ public class EmployeeService {
     private final S3Client s3Client;
     private final ObjectMapper objectMapper;
     private final S3Presigner s3Presigner;
+    private final EmployeeEventProducer employeeEventProducer;
 
     @Value("${aws.s3.bucket-name}")
     private String bucketName;
@@ -58,8 +61,8 @@ public class EmployeeService {
     public void addEmployee(EmployeeRequest employeeRequest){
         Employee employee = new Employee();
         updateEmployeeFromRequest(employee, employeeRequest);
-        employeeRepository.save(employee);
-
+        Employee savedEmployee = employeeRepository.save(employee);
+        employeeEventProducer.publishEmployeeCreatedEvent(savedEmployee.getId());
     }
 
     private void updateEmployeeFromRequest(Employee employee, EmployeeRequest employeeRequest) {
@@ -111,6 +114,7 @@ public class EmployeeService {
                 .map(existingEmployee -> {
                     updateEmployeeFromRequest(existingEmployee, updatedEmployeeRequest);
                     employeeRepository.save(existingEmployee);
+                    employeeEventProducer.publishEmployeeUpdatedEvent(id);
                     return true;
                 }).orElse(false);
     }
@@ -175,6 +179,7 @@ public class EmployeeService {
         return employeeRepository.findById(id)
                 .map(emp -> {
                     employeeRepository.delete(emp);
+                    employeeEventProducer.publishEmployeeDeletedEvent(id);
                     return true;
                 })
                 .orElse(false);
@@ -314,6 +319,7 @@ public class EmployeeService {
         }
     }
 
+    @Transactional(readOnly = true)
     public String uploadEmployeesJsonToS3() {
         try {
             List<EmployeeResponse> employees = fetchAllEmployees();
@@ -322,9 +328,12 @@ public class EmployeeService {
                     .writerWithDefaultPrettyPrinter()
                     .writeValueAsString(employees);
 
-            String fileName = "employee-reports/employees-"
-                    + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
-                    + ".json";
+            String timestamp =
+                    LocalDateTime.now()
+                            .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+
+            String fileName =
+                    "employee-reports/employees-" + timestamp + ".json";
 
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)
