@@ -1,0 +1,9 @@
+employee:
+  replicaCount: 1
+  image: employee-service:latest
+  port: 8080
+
+payroll:
+  replicaCount: 1
+  image: payroll-service:latest
+  port: 8082
