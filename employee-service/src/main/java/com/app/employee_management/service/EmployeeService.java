@@ -84,20 +84,16 @@ public class EmployeeService {
                 List<WorkExperience> workExperienceList =
                         employeeRequest.getWorkExperiences()
                                 .stream()
-                                .map(workDTO -> {
-
-                                    WorkExperience workExperience = new WorkExperience();
-
-                                    workExperience.setCompanyName(workDTO.getCompanyName());
-                                    workExperience.setDesignation(workDTO.getDesignation());
-                                    workExperience.setYearsOfExperience(workDTO.getYearsOfExperience());
-                                    workExperience.setTechnology(workDTO.getTechnology());
-
-                                    workExperience.setEmployee(employee);
-
-                                    return workExperience;
-
-                                }).toList();
+                                .map(workDTO ->
+                                        WorkExperience.builder()
+                                                .companyName(workDTO.getCompanyName())
+                                                .designation(workDTO.getDesignation())
+                                                .yearsOfExperience(workDTO.getYearsOfExperience())
+                                                .technology(workDTO.getTechnology())
+                                                .employee(employee)
+                                                .build()
+                                )
+                                .toList();
 
                 employee.setWorkExperiences(workExperienceList);
             }
@@ -118,7 +114,7 @@ public class EmployeeService {
                     return true;
                 }).orElse(false);
     }
-
+// se
     private EmployeeResponse mapToEmployeeResponse(Employee employee) {
         EmployeeResponse response = new EmployeeResponse();
 
