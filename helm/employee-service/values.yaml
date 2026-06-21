@@ -1,0 +1,10 @@
+replicaCount: 1
+
+image:
+  repository: employee-service
+  tag: latest
+  pullPolicy: Never
+
+service:
+  type: ClusterIP
+  port: 8080

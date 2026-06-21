@@ -1,0 +1,9 @@
+dependencies:
+- name: employee-service
+  repository: file://../employee-service
+  version: 0.1.0
+- name: payroll-service
+  repository: file://../payroll-service
+  version: 0.1.0
+digest: sha256:27d3cb18f1f76cfe1e54550cb2bdf563e65c383d1b6eec9279efaf71b33f8949
+generated: "2026-06-21T18:52:58.4248106-04:00"
